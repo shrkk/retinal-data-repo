@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Retinal Cones Plot</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <h2>Retinal Cones Scatter Plot</h2>
+
+    <div>
+        <label>Subject ID: <input type="text" id="subject_id" value="AO001"></label>
+        <label>Meridian: <input type="text" id="meridian" value="temporal"></label>
+        <label>Spectral Types (comma-separated): <input type="text" id="cone_type" value="L,M,S"></label>
+        <button onclick="fetchAndPlot()">Plot</button>
+    </div>
+
+    <div id="plot" style="width: 90%; height: 600px; margin-top: 20px;"></div>
+
+    <script>
+        async function fetchAndPlot() {
+            const subject_id = document.getElementById('subject_id').value;
+            const meridian = document.getElementById('meridian').value;
+            const cone_type_input = document.getElementById('cone_type').value;
+            const cone_types = cone_type_input.split(',').map(s => s.trim());
+
+            const allTraces = [];
+
+            for (const type of cone_types) {
+                const url = `/plot-data?subject_id=${encodeURIComponent(subject_id)}&meridian=${encodeURIComponent(meridian)}&cone_spectral_type=${encodeURIComponent(type)}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                allTraces.push({
+                    x: data.x,
+                    y: data.y,
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: type,
+                    marker: { size: 6 }
+                });
+            }
+
+            const layout = {
+                title: `Retinal Cones for ${subject_id} (${meridian})`,
+                xaxis: { title: 'X (microns)' },
+                yaxis: { title: 'Y (microns)' },
+                showlegend: true
+            };
+
+            Plotly.newPlot('plot', allTraces, layout);
+        }
+    </script>
+</body>
+</html>
