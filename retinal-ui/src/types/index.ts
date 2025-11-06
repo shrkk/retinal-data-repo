@@ -1,6 +1,8 @@
 export interface Patient {
   subject_id: string;
   age: number;
+  eye: string;
+  eye_description: string;
 }
 
 export interface PlotData {
@@ -30,4 +32,10 @@ export interface Metadata {
   mcone_density?: number;
   scone_density?: number;
   numcones?: number;
+  filtered_total_cones?: number;
+  filtered_l_cones?: number;
+  filtered_m_cones?: number;
+  filtered_s_cones?: number;
+  eye?: string;
+  eye_description?: string;
 }

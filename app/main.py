@@ -5,29 +5,25 @@ import io
 import asyncio
 from typing import Optional, List
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
-import asyncpg
-from .models import PlotData
+import sqlite3
+import aiosqlite
+# PlotData model defined below
 
 
 load_dotenv()
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
-PORT = int(os.environ.get("PORT", 8000))
+DATABASE_URL = os.environ.get("DATABASE_URL", "retinal_data.db")
+PORT = int(os.environ.get("PORT", 8001))
 ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "").split(",")
-
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL environment variable is required")
 
 app = FastAPI(title="Retinal Cones API")
 
-from fastapi.staticfiles import StaticFiles
-
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# Static files removed for now
 
 
 # CORS
@@ -39,21 +35,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# connection pool
-pool: Optional[asyncpg.pool.Pool] = None
+# database connection
+import os
+db_path = DATABASE_URL
+
+# Convert to absolute path to avoid working directory issues
+if not os.path.isabs(db_path):
+    # Get the directory where this script is located
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Go up one level to get the project root
+    project_root = os.path.dirname(script_dir)
+    db_path = os.path.join(project_root, db_path)
 
 
-@app.on_event("startup")
-async def startup():
-    global pool
-    pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=10)
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    global pool
-    if pool:
-        await pool.close()
+async def get_db():
+    async with aiosqlite.connect(db_path) as db:
+        yield db
 
 
 # Pydantic response model for /plot-data
@@ -66,12 +63,13 @@ class PlotData(BaseModel):
 # 1) List patients
 @app.get("/patients")
 async def get_patients():
-    global pool
-    async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT DISTINCT subject_id, age FROM cone_data WHERE subject_id IS NOT NULL ORDER BY subject_id LIMIT 1000"
+    async with aiosqlite.connect(db_path) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(
+            "SELECT DISTINCT subject_id, age, eye, CASE WHEN eye = 'OD' THEN 'Right Eye' WHEN eye = 'OS' THEN 'Left Eye' ELSE eye END as eye_description FROM cone_data WHERE subject_id IS NOT NULL ORDER BY subject_id LIMIT 1000"
         )
-    data = [dict(r) for r in rows]
+        rows = await cursor.fetchall()
+        data = [dict(row) for row in rows]
     return JSONResponse(content=data)
 
 
@@ -85,29 +83,26 @@ async def get_cones(
     cone_type: Optional[str] = Query(None, alias="cone_spectral_type"),
     age_min: Optional[int] = Query(None),
     age_max: Optional[int] = Query(None),
-    limit: int = Query(100, gt=0, le=1000),
+    limit: int = Query(50000, gt=0, le=100000),
     offset: int = Query(0, ge=0),
 ):
-    global pool
     where_clauses = []
     params = []
 
     if subject_id:
-        params.append(subject_id); where_clauses.append(f"subject_id = ${len(params)}")
+        params.append(subject_id); where_clauses.append("subject_id = ?")
     if meridian:
-        params.append(meridian); where_clauses.append(f"meridian = ${len(params)}")
+        params.append(meridian); where_clauses.append("meridian = ?")
     if cone_type:
-        params.append(cone_type); where_clauses.append(f"cone_spectral_type = ${len(params)}")
+        params.append(cone_type); where_clauses.append("cone_spectral_type = ?")
     if age_min is not None:
-        params.append(age_min); where_clauses.append(f"age >= ${len(params)}")
+        params.append(age_min); where_clauses.append("age >= ?")
     if age_max is not None:
-        params.append(age_max); where_clauses.append(f"age <= ${len(params)}")
+        params.append(age_max); where_clauses.append("age <= ?")
 
     # append limit & offset
     params.append(limit)
     params.append(offset)
-    limit_idx = len(params) - 1
-    offset_idx = len(params)
 
     where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
     sql = f"""
@@ -115,11 +110,13 @@ async def get_cones(
         FROM cone_data
         {where_sql}
         ORDER BY cone_x_microns NULLS LAST
-        LIMIT ${limit_idx} OFFSET ${offset_idx};
+        LIMIT ? OFFSET ?;
     """
 
-    async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, *params)
+    async with aiosqlite.connect(db_path) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(sql, params)
+        rows = await cursor.fetchall()
 
     # Convert datetime objects to ISO strings
     result = []
@@ -142,32 +139,30 @@ async def plot_data(
     cone_type: Optional[List[str]] = Query(None, alias="cone_spectral_type"),
     eccentricity_min: Optional[float] = Query(None),
     eccentricity_max: Optional[float] = Query(None),
-    limit: int = Query(2000, gt=0, le=5000),
+    limit: int = Query(50000, gt=0, le=100000),
 ):
-    global pool
     where_clauses = []
     params = []
 
     if subject_id:
         params.append(subject_id)
-        where_clauses.append(f"subject_id = ${len(params)}")
+        where_clauses.append("subject_id = ?")
     if meridian:
         params.append(meridian)
-        where_clauses.append(f"meridian = ${len(params)}")
+        where_clauses.append("meridian = ?")
     if cone_type:
         # Use SQL IN clause for multiple types
+        placeholders = ",".join("?" for _ in cone_type)
         params.extend(cone_type)
-        placeholders = ",".join(f"${i}" for i in range(len(params)-len(cone_type)+1, len(params)+1))
         where_clauses.append(f"cone_spectral_type IN ({placeholders})")
     if eccentricity_min is not None:
         params.append(eccentricity_min)
-        where_clauses.append(f"eccentricity_deg >= ${len(params)}")
+        where_clauses.append("eccentricity_deg >= ?")
     if eccentricity_max is not None:
         params.append(eccentricity_max)
-        where_clauses.append(f"eccentricity_deg <= ${len(params)}")
+        where_clauses.append("eccentricity_deg <= ?")
 
     params.append(limit)
-    limit_idx = len(params)
 
     where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
     sql = f"""
@@ -175,11 +170,13 @@ async def plot_data(
         FROM cone_data
         {where_sql}
         ORDER BY cone_x_microns NULLS LAST
-        LIMIT ${limit_idx};
+        LIMIT ?;
     """
 
-    async with pool.acquire() as conn:
-        rows = await conn.fetch(sql, *params)
+    async with aiosqlite.connect(db_path) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute(sql, params)
+        rows = await cursor.fetchall()
 
     x, y, ctype = [], [], []
     for r in rows:
@@ -194,33 +191,82 @@ async def plot_data(
 async def get_metadata(
     subject_id: Optional[str] = Query(None),
     meridian: Optional[str] = Query(None),
+    cone_type: Optional[List[str]] = Query(None, alias="cone_spectral_type"),
+    eccentricity_min: Optional[float] = Query(None),
+    eccentricity_max: Optional[float] = Query(None),
 ):
-    global pool
     where_clauses = []
     params = []
 
     if subject_id:
         params.append(subject_id)
-        where_clauses.append(f"subject_id = ${len(params)}")
+        where_clauses.append("subject_id = ?")
     if meridian:
         params.append(meridian)
-        where_clauses.append(f"meridian = ${len(params)}")
+        where_clauses.append("meridian = ?")
+    if cone_type:
+        # Use SQL IN clause for multiple types
+        placeholders = ",".join("?" for _ in cone_type)
+        params.extend(cone_type)
+        where_clauses.append(f"cone_spectral_type IN ({placeholders})")
+    if eccentricity_min is not None:
+        params.append(eccentricity_min)
+        where_clauses.append("eccentricity_deg >= ?")
+    if eccentricity_max is not None:
+        params.append(eccentricity_max)
+        where_clauses.append("eccentricity_deg <= ?")
 
     where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
-    sql = f"""
-        SELECT DISTINCT fov, lm_ratio, scones, lcone_density, mcone_density, scone_density, numcones
+    
+    # Get metadata from first row (consistent across filtered data)
+    metadata_sql = f"""
+        SELECT DISTINCT fov, lm_ratio, scones, lcone_density, mcone_density, scone_density, numcones, eye,
+               CASE 
+                   WHEN eye = 'OD' THEN 'Right Eye'
+                   WHEN eye = 'OS' THEN 'Left Eye'
+                   ELSE eye
+               END as eye_description
         FROM cone_data
         {where_sql}
         LIMIT 1;
     """
-
-    async with pool.acquire() as conn:
-        row = await conn.fetchrow(sql, *params)
     
-    if not row:
+    # Get actual counts for filtered data
+    counts_sql = f"""
+        SELECT 
+            COUNT(*) as total_filtered_cones,
+            COUNT(CASE WHEN cone_spectral_type = 'L' THEN 1 END) as l_cones_count,
+            COUNT(CASE WHEN cone_spectral_type = 'M' THEN 1 END) as m_cones_count,
+            COUNT(CASE WHEN cone_spectral_type = 'S' THEN 1 END) as s_cones_count
+        FROM cone_data
+        {where_sql};
+    """
+
+    async with aiosqlite.connect(db_path) as db:
+        db.row_factory = aiosqlite.Row
+        
+        # Get metadata
+        cursor = await db.execute(metadata_sql, params)
+        metadata_row = await cursor.fetchone()
+        
+        # Get counts
+        cursor = await db.execute(counts_sql, params)
+        counts_row = await cursor.fetchone()
+    
+    if not metadata_row:
         return JSONResponse(content={})
     
-    metadata = dict(row)
+    metadata = dict(metadata_row)
+    counts = dict(counts_row)
+    
+    # Add filtered counts to metadata
+    metadata.update({
+        "filtered_total_cones": counts["total_filtered_cones"],
+        "filtered_l_cones": counts["l_cones_count"],
+        "filtered_m_cones": counts["m_cones_count"],
+        "filtered_s_cones": counts["s_cones_count"]
+    })
+    
     return JSONResponse(content=metadata)
 
 # 5) Get eccentricity ranges for a subject/meridian
@@ -229,21 +275,29 @@ async def get_eccentricity_ranges(
     subject_id: str = Query(...),
     meridian: str = Query(...),
 ):
-    global pool
-    async with pool.acquire() as conn:
-        rows = await conn.fetch("""
+    async with aiosqlite.connect(db_path) as db:
+        db.row_factory = aiosqlite.Row
+        cursor = await db.execute("""
             SELECT DISTINCT eccentricity_deg, COUNT(*) as count
             FROM cone_data 
-            WHERE subject_id = $1 AND meridian = $2
+            WHERE subject_id = ? AND meridian = ?
             GROUP BY eccentricity_deg
             ORDER BY eccentricity_deg
-        """, subject_id, meridian)
+        """, (subject_id, meridian))
+        rows = await cursor.fetchall()
     
     if not rows:
         return JSONResponse(content={"ranges": []})
     
     # Group eccentricities into ranges
-    eccentricities = [float(r["eccentricity_deg"]) for r in rows if r["eccentricity_deg"] is not None]
+    eccentricities = []
+    for r in rows:
+        if r["eccentricity_deg"] is not None:
+            try:
+                eccentricities.append(float(r["eccentricity_deg"]))
+            except (ValueError, TypeError):
+                # Skip malformed eccentricity values
+                continue
     eccentricities.sort()
     
     ranges = []
@@ -275,26 +329,24 @@ async def export_cones(
     if not subject_id or not meridian:
         raise HTTPException(status_code=400, detail="subject_id and meridian are required")
 
-    global pool
     params = [subject_id, meridian]
-    where_clauses = ["subject_id = $1", "meridian = $2"]
+    where_clauses = ["subject_id = ?", "meridian = ?"]
 
     if cone_type:
         # Use SQL IN clause for multiple types
+        placeholders = ",".join("?" for _ in cone_type)
         params.extend(cone_type)
-        placeholders = ",".join(f"${i}" for i in range(len(params)-len(cone_type)+1, len(params)+1))
         where_clauses.append(f"cone_spectral_type IN ({placeholders})")
     
     if eccentricity_min is not None:
         params.append(eccentricity_min)
-        where_clauses.append(f"eccentricity_deg >= ${len(params)}")
+        where_clauses.append("eccentricity_deg >= ?")
     
     if eccentricity_max is not None:
         params.append(eccentricity_max)
-        where_clauses.append(f"eccentricity_deg <= ${len(params)}")
+        where_clauses.append("eccentricity_deg <= ?")
 
     params.append(limit)
-    limit_idx = len(params)
 
     where_sql = " AND ".join(where_clauses)
     sql = f"""
@@ -302,12 +354,15 @@ async def export_cones(
         FROM cone_data
         WHERE {where_sql}
         ORDER BY cone_x_microns
-        LIMIT ${limit_idx};
+        LIMIT ?;
     """
 
     async def stream_generator():
-        async with pool.acquire() as conn:
-            rows = await conn.fetch(sql, *params)
+        async with aiosqlite.connect(db_path) as db:
+            db.row_factory = aiosqlite.Row
+            cursor = await db.execute(sql, params)
+            rows = await cursor.fetchall()
+            
             if not rows:
                 yield b"id,cone_x_microns,cone_y_microns,cone_spectral_type\n"
                 return
@@ -359,3 +414,7 @@ async def export_cones(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=PORT)

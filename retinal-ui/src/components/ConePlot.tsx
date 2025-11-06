@@ -113,7 +113,7 @@ export const ConePlot: React.FC<ConePlotProps> = ({ data, metadata }) => {
                 fontWeight: "600",
                 color: "var(--foreground)"
               }}>
-                Cone Types
+                Cone Types (Filtered)
               </h4>
               <div style={{
                 display: "flex",
@@ -121,18 +121,30 @@ export const ConePlot: React.FC<ConePlotProps> = ({ data, metadata }) => {
                 gap: "0.25rem",
                 fontSize: "0.8rem"
               }}>
-                {Array.from(new Set(data.cone_type)).map((type) => (
-                  <div key={type} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <div style={{
-                      width: "12px",
-                      height: "12px",
-                      backgroundColor: COLOR_MAP[type],
-                      borderRadius: "50%",
-                      border: "1px solid rgba(0,0,0,0.1)"
-                    }}></div>
-                    <span style={{ color: "var(--muted-foreground)" }}>{type}</span>
-                  </div>
-                ))}
+                {Array.from(new Set(data.cone_type)).map((type) => {
+                  const count = data.cone_type.filter(t => t === type).length;
+                  return (
+                    <div key={type} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <div style={{
+                        width: "12px",
+                        height: "12px",
+                        backgroundColor: COLOR_MAP[type],
+                        borderRadius: "50%",
+                        border: "1px solid rgba(0,0,0,0.1)"
+                      }}></div>
+                      <span style={{ color: "var(--muted-foreground)" }}>{type}: {count}</span>
+                    </div>
+                  );
+                })}
+                <div style={{ 
+                  marginTop: "0.25rem", 
+                  paddingTop: "0.25rem", 
+                  borderTop: "1px solid var(--border)",
+                  fontWeight: "600",
+                  color: "var(--foreground)"
+                }}>
+                  Total: {data.cone_type.length}
+                </div>
               </div>
             </div>
 
@@ -153,6 +165,9 @@ export const ConePlot: React.FC<ConePlotProps> = ({ data, metadata }) => {
                 fontSize: "0.8rem",
                 color: "var(--muted-foreground)"
               }}>
+                {metadata.eye_description && (
+                  <div><strong>Eye:</strong> {metadata.eye_description}</div>
+                )}
                 {metadata.fov && (
                   <div><strong>FOV:</strong> {metadata.fov}</div>
                 )}
@@ -172,7 +187,18 @@ export const ConePlot: React.FC<ConePlotProps> = ({ data, metadata }) => {
                   <div><strong>S Cone Density:</strong> {metadata.scone_density.toFixed(0)}</div>
                 )}
                 {metadata.numcones && (
-                  <div><strong>Total Cones:</strong> {metadata.numcones}</div>
+                  <div><strong>Total Cones (All):</strong> {metadata.numcones}</div>
+                )}
+                {metadata.filtered_total_cones !== undefined && (
+                  <div style={{ 
+                    marginTop: "0.25rem", 
+                    paddingTop: "0.25rem", 
+                    borderTop: "1px solid var(--border)",
+                    fontWeight: "600",
+                    color: "var(--foreground)"
+                  }}>
+                    <strong>Filtered Total:</strong> {metadata.filtered_total_cones}
+                  </div>
                 )}
               </div>
             </div>
