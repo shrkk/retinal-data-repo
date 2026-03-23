@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import { FilterBar } from "./components/FilterBar";
 import { EccentricitySubPlots } from "./components/EccentricitySubPlots";
 import { ModeToggle } from "./components/mode-toggle";
-import { AdminPanel } from "./components/AdminPanel";
+import { AdminPage } from "./components/AdminPage";
 import { downloadCSV } from "./api";
 
 const App: React.FC = () => {
   const [filters, setFilters] = useState<any>(null);
+  const [view, setView] = useState<"main" | "admin">("main");
 
   const handleFilterChange = async (newFilters: any) => {
     setFilters(newFilters);
@@ -14,13 +15,16 @@ const App: React.FC = () => {
 
   const handleDownload = async (displayId: string) => {
     if (filters && displayId) {
-      // Use the displayId (with R/L suffix) for the filename
       await downloadCSV({ ...filters, displayId });
     }
   };
 
+  if (view === "admin") {
+    return <AdminPage onBack={() => setView("main")} />;
+  }
+
   return (
-    <div style={{ 
+    <div style={{
       minHeight: "100vh",
       display: "flex",
       flexDirection: "column",
@@ -29,22 +33,27 @@ const App: React.FC = () => {
       maxWidth: "1200px",
       margin: "0 auto"
     }}>
-      <div style={{ 
+      <div style={{
         width: "100%",
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center", 
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
         marginBottom: "2rem",
         maxWidth: "1000px"
       }}>
         <h1 style={{ margin: 0, fontSize: "2rem", fontWeight: "600" }}>SabLab: Retinal Cones Viewer</h1>
         <ModeToggle />
       </div>
-      
+
       <div style={{ width: "100%", maxWidth: "1000px", marginBottom: "2rem" }}>
-        <FilterBar onChange={handleFilterChange} onDownload={handleDownload} useSubPlots={true} />
+        <FilterBar
+          onChange={handleFilterChange}
+          onDownload={handleDownload}
+          onAdminClick={() => setView("admin")}
+          useSubPlots={true}
+        />
       </div>
-      
+
       <div style={{
         width: "100%",
         maxWidth: "1200px",
@@ -70,10 +79,6 @@ const App: React.FC = () => {
             <div>Please select filters to view retinal cone data</div>
           </div>
         )}
-      </div>
-
-      <div style={{ width: "100%", maxWidth: "1000px", marginTop: "2rem" }}>
-        <AdminPanel />
       </div>
     </div>
   );

@@ -5,13 +5,14 @@ import { getPatients } from "../api";
 interface FilterBarProps {
   onChange: (filters: { subjectId: string; meridian: string; coneTypes: string[]; eccentricityMin?: number; eccentricityMax?: number }) => void;
   onDownload: (displayId: string) => void;
+  onAdminClick?: () => void;
   useSubPlots?: boolean;
 }
 
 const MERIDIANS = ["temporal", "nasal", "superior", "inferior"];
 const CONE_TYPES = ["L", "M", "S"];
 
-export const FilterBar: React.FC<FilterBarProps> = ({ onChange, onDownload, useSubPlots = false }) => {
+export const FilterBar: React.FC<FilterBarProps> = ({ onChange, onDownload, onAdminClick, useSubPlots = false }) => {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [subjectId, setSubjectId] = useState("");
   const [meridian, setMeridian] = useState(MERIDIANS[0]);
@@ -134,6 +135,24 @@ export const FilterBar: React.FC<FilterBarProps> = ({ onChange, onDownload, useS
         <button onClick={() => onDownload(subjectId)} disabled={!subjectId || coneTypes.length === 0}>
           Download CSV
         </button>
+
+        {onAdminClick && (
+          <button
+            onClick={onAdminClick}
+            style={{
+              padding: "0.4rem 0.9rem",
+              borderRadius: "var(--radius)",
+              border: "1px solid var(--border)",
+              backgroundColor: "transparent",
+              color: "var(--foreground)",
+              cursor: "pointer",
+              fontSize: "0.875rem",
+              fontWeight: 500,
+            }}
+          >
+            Login
+          </button>
+        )}
       </div>
       
       {subjectId && (

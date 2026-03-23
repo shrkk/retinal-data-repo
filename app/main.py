@@ -432,45 +432,75 @@ async def admin_login(body: LoginRequest):
     return {"token": token}
 
 
-# 8) Admin CSV upload
-@app.post("/admin/upload")
-async def admin_upload(
-    file: UploadFile = File(...),
-    authorization: Optional[str] = Header(None),
-):
+def _require_admin(authorization: Optional[str]):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Unauthorized")
     token = authorization[7:]
     if token not in _admin_sessions:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    if not (file.filename or "").lower().endswith(".csv"):
+
+def _parse_upload(content: bytes, filename: str):
+    if not (filename or "").lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are supported")
-
-    content = await file.read()
-
     try:
         df = parse_csv_bytes(content)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to parse CSV: {e}")
-
     if df.empty:
         raise HTTPException(status_code=400, detail="No cone data found in CSV")
+    return df
+
+
+# 8) Admin CSV validate (dry-run — no DB writes)
+@app.post("/admin/validate")
+async def admin_validate(
+    file: UploadFile = File(...),
+    authorization: Optional[str] = Header(None),
+):
+    _require_admin(authorization)
+    content = await file.read()
+    df = _parse_upload(content, file.filename or "")
+
+    subjects = sorted(df["subject_id"].dropna().unique().tolist()) if "subject_id" in df.columns else []
+    meridians = sorted(df["meridian"].dropna().unique().tolist()) if "meridian" in df.columns else []
+    cone_types = sorted(df["cone_spectral_type"].dropna().unique().tolist()) if "cone_spectral_type" in df.columns else []
+
+    return {
+        "valid": True,
+        "row_count": len(df),
+        "subjects": subjects,
+        "meridians": meridians,
+        "cone_types": cone_types,
+        "filename": file.filename,
+    }
+
+
+# 9) Admin CSV upload (atomic transaction — rolls back on any error)
+@app.post("/admin/upload")
+async def admin_upload(
+    file: UploadFile = File(...),
+    authorization: Optional[str] = Header(None),
+):
+    _require_admin(authorization)
+    content = await file.read()
+    df = _parse_upload(content, file.filename or "")
 
     rows = [to_row(r) for _, r in df.iterrows()]
 
     pool = get_pool()
     async with pool.acquire() as conn:
-        await conn.executemany(
-            """INSERT INTO cone_data (
-                cone_x_microns, cone_y_microns, cone_spectral_type,
-                subject_id, eye, meridian, eccentricity_deg, eccentricity_mm,
-                lm_ratio, scones, lcone_density, mcone_density, scone_density,
-                numcones, nonclass_cones, age, fov, ret_mag_factor,
-                cone_origin, zernike_pupil_diam, zernike_measure_wave, zernike_optim_wave
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)""",
-            rows,
-        )
+        async with conn.transaction():
+            await conn.executemany(
+                """INSERT INTO cone_data (
+                    cone_x_microns, cone_y_microns, cone_spectral_type,
+                    subject_id, eye, meridian, eccentricity_deg, eccentricity_mm,
+                    lm_ratio, scones, lcone_density, mcone_density, scone_density,
+                    numcones, nonclass_cones, age, fov, ret_mag_factor,
+                    cone_origin, zernike_pupil_diam, zernike_measure_wave, zernike_optim_wave
+                ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)""",
+                rows,
+            )
 
     return {"rows_inserted": len(rows), "filename": file.filename}
 

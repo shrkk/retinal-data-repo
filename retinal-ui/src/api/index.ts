@@ -90,6 +90,26 @@ export async function adminLogin(password: string): Promise<string> {
   return data.token as string;
 }
 
+export async function adminValidateCSV(
+  token: string,
+  file: File
+): Promise<{ valid: boolean; row_count: number; subjects: string[]; meridians: string[]; cone_types: string[]; filename: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_BASE}/admin/validate`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Validation failed" }));
+    throw new Error(err.detail || "Validation failed");
+  }
+  return res.json();
+}
+
 export async function adminUploadCSV(
   token: string,
   file: File,
