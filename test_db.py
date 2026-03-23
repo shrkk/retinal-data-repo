@@ -8,7 +8,7 @@ if not DATABASE_URL:
 
 async def test_connection():
     try:
-        conn = await asyncpg.connect(DATABASE_URL, ssl="require")
+        conn = await asyncpg.connect(DATABASE_URL, ssl="require", statement_cache_size=0)
         row = await conn.fetchrow("SELECT 1;")
         print("Connection successful ✅:", row)
         await conn.close()
