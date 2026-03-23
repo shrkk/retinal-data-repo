@@ -9,10 +9,10 @@ Requirements for production-ready deployment. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Supabase PostgreSQL replaces SQLite as the primary database, with asyncpg connection pool initialized at FastAPI startup
-- [ ] **INFRA-02**: All configuration (DB URL, admin password, allowed origins) is loaded via pydantic-settings from environment variables — no hardcoded values in source code
+- [x] **INFRA-01**: Supabase PostgreSQL replaces SQLite as the primary database, with asyncpg connection pool initialized at FastAPI startup
+- [x] **INFRA-02**: All configuration (DB URL, admin password, allowed origins) is loaded via pydantic-settings from environment variables — no hardcoded values in source code
 - [ ] **INFRA-03**: CORS is configured with explicit allowed origins from an env var, enabling Vercel frontend → Render backend communication
-- [ ] **INFRA-04**: Database has composite indexes on `(subject_id, meridian)` and `(subject_id, eccentricity_deg)` for query performance
+- [x] **INFRA-04**: Database has composite indexes on `(subject_id, meridian)` and `(subject_id, eccentricity_deg)` for query performance
 
 ### Data Integrity
 
@@ -23,7 +23,7 @@ Requirements for production-ready deployment. Each maps to roadmap phases.
 
 ### Backend
 
-- [ ] **BACK-01**: FastAPI routes use asyncpg pool for all database queries, replacing aiosqlite
+- [x] **BACK-01**: FastAPI routes use asyncpg pool for all database queries, replacing aiosqlite
 - [ ] **BACK-02**: Hardcoded `localhost:8000` URL is removed from the frontend; API base URL is read from `VITE_API_URL` environment variable
 - [ ] **BACK-03**: A bulk endpoint `GET /subjects/data` returns all subjects' cone data in a single query, replacing the N+1 per-subject call pattern
 - [ ] **BACK-04**: `POST /admin/upload` endpoint accepts a CSV file, runs filecleaner.py via BackgroundTask (using the UploadFile bytes-first pattern), and returns an ingestion summary (rows per subject, errors)
@@ -85,10 +85,10 @@ Deferred to future release.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DATA-01 | Phase 1 | Complete |
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
-| INFRA-04 | Phase 1 | Pending |
-| BACK-01 | Phase 1 | Pending |
+| INFRA-01 | Phase 1 | Complete |
+| INFRA-02 | Phase 1 | Complete |
+| INFRA-04 | Phase 1 | Complete |
+| BACK-01 | Phase 1 | Complete |
 | BACK-02 | Phase 2 | Pending |
 | BACK-03 | Phase 2 | Pending |
 | INFRA-03 | Phase 2 | Pending |

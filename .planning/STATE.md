@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Completed 01-01-PLAN.md — credential purge, password rotation, and asyncpg fix complete
-last_updated: "2026-03-23T02:49:03.134Z"
-last_activity: 2026-03-22 — Roadmap created
+status: executing
+stopped_at: Completed 01-02-PLAN.md — asyncpg migration and PostgreSQL schema creation complete
+last_updated: "2026-03-23T02:59:23.080Z"
+last_activity: 2026-03-23
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 0
+  completed_plans: 2
+  percent: 50
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 1 of 4 (Security and Foundation)
-Plan: 1 of 2 complete in current phase
+Phase: 2 of 4 (backend and data)
+Plan: Not started
 Status: In Progress
-Last activity: 2026-03-22 — Plan 01-01 complete (credential purge + password rotation)
+Last activity: 2026-03-23
 
 Progress: [█████░░░░░] 50%
 
@@ -53,6 +53,7 @@ Progress: [█████░░░░░] 50%
 
 *Updated after each plan completion*
 | Phase 01-security-and-foundation P01 | 40min | 2 tasks | 2 files |
+| Phase 01-security-and-foundation P02 | 3min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,9 @@ Recent decisions affecting current work:
 - [Setup]: Single ADMIN_PASSWORD env var — no Supabase Auth needed for single-team tool
 - [Phase 01-security-and-foundation]: Used git-filter-repo --replace-text to purge leaked password from all git history — faster and more precise than BFG or filter-branch
 - [Phase 01-security-and-foundation]: asyncpg requires statement_cache_size=0 for Supabase transaction pooler (port 6543) — mandatory in all asyncpg connections
+- [Phase 01-security-and-foundation]: asyncpg pool max_size=5 to stay within Supabase free tier connection limits
+- [Phase 01-security-and-foundation]: statement_cache_size=0 applied to all asyncpg connections (pool and direct) for Supabase pgbouncer compatibility
+- [Phase 01-security-and-foundation]: settings = Settings() at module level for fail-fast startup when DATABASE_URL or ADMIN_PASSWORD missing
 
 ### Pending Todos
 
@@ -80,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T02:49:03.132Z
-Stopped at: Completed 01-01-PLAN.md — credential purge, password rotation, and asyncpg fix complete
+Last session: 2026-03-23T02:54:58.711Z
+Stopped at: Completed 01-02-PLAN.md — asyncpg migration and PostgreSQL schema creation complete
 Resume file: None
