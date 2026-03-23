@@ -16,7 +16,7 @@ Requirements for production-ready deployment. Each maps to roadmap phases.
 
 ### Data Integrity
 
-- [ ] **DATA-01**: Live Supabase password is removed from `test_db.py`, rotated in Supabase, and purged from git history
+- [x] **DATA-01**: Live Supabase password is removed from `test_db.py`, rotated in Supabase, and purged from git history
 - [ ] **DATA-02**: All 13 subjects from `Cone_classification_data/` are ingested into Supabase via filecleaner.py with real meridian and NC cone data
 - [ ] **DATA-03**: Fake meridian generator scripts (`distribute_meridians.py`, `update_meridians.py`) are deleted — meridian data comes exclusively from CSV ingestion
 - [ ] **DATA-04**: Every admin CSV upload is automatically processed through filecleaner.py before any data touches the database — no raw or unclean data can be inserted
@@ -84,7 +84,7 @@ Deferred to future release.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
 | INFRA-01 | Phase 1 | Pending |
 | INFRA-02 | Phase 1 | Pending |
 | INFRA-04 | Phase 1 | Pending |
