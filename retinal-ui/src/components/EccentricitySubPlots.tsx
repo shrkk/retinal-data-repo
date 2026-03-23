@@ -329,8 +329,8 @@ export const EccentricitySubPlots: React.FC<EccentricitySubPlotsProps> = ({
                   gap: "0.25rem",
                   fontSize: "0.8rem"
                 }}>
-                  {Array.from(new Set(subPlot.data.cone_type)).map((type) => {
-                    const count = subPlot.data.cone_type.filter(t => t === type).length;
+                  {Array.from(new Set(subPlot.data?.cone_type ?? [])).map((type) => {
+                    const count = (subPlot.data?.cone_type ?? []).filter(t => t === type).length;
                     return (
                       <div key={type} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <div style={{

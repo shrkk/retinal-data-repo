@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { FilterBar } from "./components/FilterBar";
 import { EccentricitySubPlots } from "./components/EccentricitySubPlots";
 import { ModeToggle } from "./components/mode-toggle";
-import { ThemeProvider } from "./components/theme-provider";
 import { downloadCSV } from "./api";
 
 const App: React.FC = () => {
