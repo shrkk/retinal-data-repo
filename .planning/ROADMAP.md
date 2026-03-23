@@ -26,9 +26,9 @@ Starting from a partially-broken local SQLite app with a committed database pass
   2. FastAPI starts up, connects to Supabase PostgreSQL via asyncpg pool, and serves `/subjects` without error
   3. The `cone_data` table exists in Supabase with correct column types (including `eccentricity_mm` as FLOAT) and all 4 composite indexes
   4. All configuration (DATABASE_URL, ADMIN_PASSWORD, ALLOWED_ORIGINS) is loaded from environment variables via pydantic-settings; the app refuses to start if required vars are missing
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 01-01-PLAN.md — Credential purge from test_db.py, git history clean, Supabase password rotation
+- [x] 01-01-PLAN.md — Credential purge from test_db.py, git history clean, Supabase password rotation
 - [ ] 01-02-PLAN.md — Pydantic-settings config, asyncpg pool, PostgreSQL schema with indexes, migrate all routes from aiosqlite
 
 ### Phase 2: Backend and Data
@@ -72,7 +72,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Security and Foundation | 0/2 | Planning complete | - |
+| 1. Security and Foundation | 1/2 | In Progress|  |
 | 2. Backend and Data | 0/TBD | Not started | - |
 | 3. Frontend and Admin | 0/TBD | Not started | - |
 | 4. Deployment | 0/TBD | Not started | - |
