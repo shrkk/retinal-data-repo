@@ -77,6 +77,41 @@ export async function getEccentricityRanges(subjectId: string, meridian: string)
   return res.json();
 }
 
+export async function adminLogin(password: string): Promise<string> {
+  const res = await fetch(`${API_BASE}/admin/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  if (!res.ok) {
+    throw new Error("Invalid password");
+  }
+  const data = await res.json();
+  return data.token as string;
+}
+
+export async function adminUploadCSV(
+  token: string,
+  file: File,
+  onProgress?: (msg: string) => void
+): Promise<{ rows_inserted: number; filename: string }> {
+  onProgress?.(`Uploading ${file.name}...`);
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_BASE}/admin/upload`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Upload failed" }));
+    throw new Error(err.detail || "Upload failed");
+  }
+  return res.json();
+}
+
 export async function downloadCSV(filters: {
   subjectId: string;
   meridian: string;

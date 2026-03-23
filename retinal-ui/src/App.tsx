@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FilterBar } from "./components/FilterBar";
 import { EccentricitySubPlots } from "./components/EccentricitySubPlots";
 import { ModeToggle } from "./components/mode-toggle";
+import { AdminPanel } from "./components/AdminPanel";
 import { downloadCSV } from "./api";
 
 const App: React.FC = () => {
@@ -44,23 +45,23 @@ const App: React.FC = () => {
         <FilterBar onChange={handleFilterChange} onDownload={handleDownload} useSubPlots={true} />
       </div>
       
-      <div style={{ 
-        width: "100%", 
+      <div style={{
+        width: "100%",
         maxWidth: "1200px",
         display: "flex",
         justifyContent: "center"
       }}>
         {filters ? (
-          <EccentricitySubPlots 
+          <EccentricitySubPlots
             subjectId={filters.subjectId}
             meridian={filters.meridian}
             coneTypes={filters.coneTypes}
           />
         ) : (
-          <div style={{ 
-            display: "flex", 
-            justifyContent: "center", 
-            alignItems: "center", 
+          <div style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
             height: "400px",
             backgroundColor: "var(--card)",
             borderRadius: "var(--radius)",
@@ -69,6 +70,10 @@ const App: React.FC = () => {
             <div>Please select filters to view retinal cone data</div>
           </div>
         )}
+      </div>
+
+      <div style={{ width: "100%", maxWidth: "1000px", marginTop: "2rem" }}>
+        <AdminPanel />
       </div>
     </div>
   );

@@ -3,16 +3,21 @@ import os
 import csv
 import io
 import asyncio
+import secrets
 from contextlib import asynccontextmanager
 from typing import Optional, List
 
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, UploadFile, File, Header
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from app.config import settings
 from app.database import create_pool, close_pool, get_pool
+from app.csv_parser import parse_csv_bytes, to_row
+
+# In-memory admin session tokens (reset on server restart)
+_admin_sessions: set[str] = set()
 
 
 @asynccontextmanager
@@ -411,6 +416,63 @@ async def export_cones(
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+
+# 7) Admin login
+class LoginRequest(BaseModel):
+    password: str
+
+
+@app.post("/admin/login")
+async def admin_login(body: LoginRequest):
+    if body.password != settings.admin_password:
+        raise HTTPException(status_code=401, detail="Invalid password")
+    token = secrets.token_hex(32)
+    _admin_sessions.add(token)
+    return {"token": token}
+
+
+# 8) Admin CSV upload
+@app.post("/admin/upload")
+async def admin_upload(
+    file: UploadFile = File(...),
+    authorization: Optional[str] = Header(None),
+):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    token = authorization[7:]
+    if token not in _admin_sessions:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    if not (file.filename or "").lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are supported")
+
+    content = await file.read()
+
+    try:
+        df = parse_csv_bytes(content)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse CSV: {e}")
+
+    if df.empty:
+        raise HTTPException(status_code=400, detail="No cone data found in CSV")
+
+    rows = [to_row(r) for _, r in df.iterrows()]
+
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        await conn.executemany(
+            """INSERT INTO cone_data (
+                cone_x_microns, cone_y_microns, cone_spectral_type,
+                subject_id, eye, meridian, eccentricity_deg, eccentricity_mm,
+                lm_ratio, scones, lcone_density, mcone_density, scone_density,
+                numcones, nonclass_cones, age, fov, ret_mag_factor,
+                cone_origin, zernike_pupil_diam, zernike_measure_wave, zernike_optim_wave
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)""",
+            rows,
+        )
+
+    return {"rows_inserted": len(rows), "filename": file.filename}
 
 
 if __name__ == "__main__":
