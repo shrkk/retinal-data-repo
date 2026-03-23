@@ -95,17 +95,17 @@ Deferred to future release.
 | DATA-02 | Phase 2 | Pending |
 | DATA-03 | Phase 2 | Pending |
 | DATA-04 | Phase 2 | Pending |
-| BACK-04 | Phase 3 | Pending |
+| BACK-04 | Phase 2 | Pending |
 | ADMIN-01 | Phase 3 | Pending |
 | ADMIN-02 | Phase 3 | Pending |
-| FE-01 | Phase 4 | Pending |
-| FE-02 | Phase 4 | Pending |
-| FE-03 | Phase 4 | Pending |
-| FE-04 | Phase 4 | Pending |
-| FE-05 | Phase 4 | Pending |
-| DEPLOY-01 | Phase 5 | Pending |
-| DEPLOY-02 | Phase 5 | Pending |
-| DEPLOY-03 | Phase 5 | Pending |
+| FE-01 | Phase 3 | Pending |
+| FE-02 | Phase 3 | Pending |
+| FE-03 | Phase 3 | Pending |
+| FE-04 | Phase 3 | Pending |
+| FE-05 | Phase 3 | Pending |
+| DEPLOY-01 | Phase 4 | Pending |
+| DEPLOY-02 | Phase 4 | Pending |
+| DEPLOY-03 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 22 total
@@ -114,4 +114,4 @@ Deferred to future release.
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after initial definition*
+*Last updated: 2026-03-22 — phase mapping updated to 4-phase compressed roadmap*
