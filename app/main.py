@@ -76,7 +76,7 @@ async def get_cones(
         params.append(subject_id)
         param_idx += 1
     if meridian:
-        where_clauses.append(f"meridian = ${param_idx}")
+        where_clauses.append(f"LOWER(meridian) = LOWER(${param_idx})")
         params.append(meridian)
         param_idx += 1
     if cone_type:
@@ -140,7 +140,7 @@ async def plot_data(
         params.append(subject_id)
         param_idx += 1
     if meridian:
-        where_clauses.append(f"meridian = ${param_idx}")
+        where_clauses.append(f"LOWER(meridian) = LOWER(${param_idx})")
         params.append(meridian)
         param_idx += 1
     if cone_type:
@@ -199,7 +199,7 @@ async def get_metadata(
         params.append(subject_id)
         param_idx += 1
     if meridian:
-        where_clauses.append(f"meridian = ${param_idx}")
+        where_clauses.append(f"LOWER(meridian) = LOWER(${param_idx})")
         params.append(meridian)
         param_idx += 1
     if cone_type:
@@ -275,7 +275,7 @@ async def get_eccentricity_ranges(
         rows = await conn.fetch(
             "SELECT DISTINCT eccentricity_deg, COUNT(*) as count "
             "FROM cone_data "
-            "WHERE subject_id = $1 AND meridian = $2 "
+            "WHERE subject_id = $1 AND LOWER(meridian) = LOWER($2) "
             "GROUP BY eccentricity_deg ORDER BY eccentricity_deg",
             subject_id, meridian
         )
@@ -324,7 +324,7 @@ async def export_cones(
         raise HTTPException(status_code=400, detail="subject_id and meridian are required")
 
     params = [subject_id, meridian]
-    where_clauses = ["subject_id = $1", "meridian = $2"]
+    where_clauses = ["subject_id = $1", "LOWER(meridian) = LOWER($2)"]
     param_idx = 3
 
     if cone_type:
