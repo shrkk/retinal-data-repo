@@ -3,7 +3,7 @@ import { adminLogin, adminUploadCSV } from "../api";
 
 interface UploadResult {
   filename: string;
-  rows_inserted: number;
+  row_count: number;
   error?: string;
 }
 
@@ -70,11 +70,11 @@ export const AdminPanel: React.FC = () => {
     for (const file of files) {
       try {
         const result = await adminUploadCSV(token, file);
-        newResults.push({ filename: result.filename, rows_inserted: result.rows_inserted });
+        newResults.push({ filename: file.name, row_count: result.row_count });
       } catch (err) {
         newResults.push({
           filename: file.name,
-          rows_inserted: 0,
+          row_count: 0,
           error: err instanceof Error ? err.message : "Unknown error",
         });
       }
@@ -274,7 +274,7 @@ export const AdminPanel: React.FC = () => {
                   {r.error ? (
                     <><strong>{r.filename}</strong>: {r.error}</>
                   ) : (
-                    <><strong>{r.filename}</strong>: {r.rows_inserted.toLocaleString()} rows inserted</>
+                    <><strong>{r.filename}</strong>: {r.row_count.toLocaleString()} rows inserted</>
                   )}
                 </div>
               ))}

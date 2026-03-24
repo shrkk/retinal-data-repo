@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { getUploadLog, UploadLogEntry } from "../api";
+import { getUploadLog } from "../api";
+import type { UploadLogEntry } from "../api";
 
 function formatTimestamp(isoString: string): { relative: string; absolute: string; timeOnly: string } {
   const date = new Date(isoString);
