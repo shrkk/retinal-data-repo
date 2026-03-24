@@ -65,10 +65,11 @@ export const Navbar: React.FC<NavbarProps> = ({ view, onNavigate }) => {
         {/* Left: brand */}
         <span
           style={{
-            fontSize: "0.9rem",
-            fontWeight: 600,
+            fontSize: "1.15rem",
+            fontWeight: 700,
             color: "var(--foreground)",
             whiteSpace: "nowrap",
+            letterSpacing: "-0.02em",
           }}
         >
           SabLab: Retinal Cone Viewer
@@ -95,16 +96,33 @@ export const Navbar: React.FC<NavbarProps> = ({ view, onNavigate }) => {
                   fontWeight: 500,
                   backgroundColor: isActive ? "var(--primary)" : "transparent",
                   color: isActive ? "var(--primary-foreground)" : "var(--foreground)",
-                  transition: "background-color 0.15s, color 0.15s",
+                  transition: "background-color 0.18s cubic-bezier(0.4,0,0.2,1), color 0.18s cubic-bezier(0.4,0,0.2,1), transform 0.12s cubic-bezier(0.4,0,0.2,1), box-shadow 0.18s cubic-bezier(0.4,0,0.2,1)",
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent)";
+                    const el = e.currentTarget as HTMLButtonElement;
+                    el.style.backgroundColor = "var(--accent)";
+                    el.style.transform = "translateY(-1px) scale(1.02)";
+                    el.style.boxShadow = "0 4px 10px oklch(0 0 0 / 10%)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isActive) {
-                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                    const el = e.currentTarget as HTMLButtonElement;
+                    el.style.backgroundColor = "transparent";
+                    el.style.transform = "translateY(0) scale(1)";
+                    el.style.boxShadow = "none";
+                  }
+                }}
+                onMouseDown={(e) => {
+                  const el = e.currentTarget as HTMLButtonElement;
+                  el.style.transform = "translateY(0) scale(0.96)";
+                  el.style.boxShadow = "none";
+                }}
+                onMouseUp={(e) => {
+                  if (!isActive) {
+                    const el = e.currentTarget as HTMLButtonElement;
+                    el.style.transform = "translateY(-1px) scale(1.02)";
                   }
                 }}
               >
