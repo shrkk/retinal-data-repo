@@ -5,9 +5,10 @@ import io
 import asyncio
 import secrets
 from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import Optional, List
 
-from fastapi import FastAPI, Query, HTTPException, UploadFile, File, Header
+from fastapi import FastAPI, Query, HTTPException, UploadFile, File, Header, BackgroundTasks, Form
 from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -114,7 +115,6 @@ async def get_cones(
         rows = await conn.fetch(sql, *params)
 
     # Convert any non-serializable objects to strings
-    from datetime import datetime
     result = []
     for r in rows:
         row_dict = dict(r)
@@ -315,7 +315,43 @@ async def get_eccentricity_ranges(
     return JSONResponse(content={"ranges": ranges})
 
 
-# 6) CSV export (streaming)
+# 6) Bulk subjects data (eliminates N+1 queries)
+@app.get("/subjects/data")
+async def get_subjects_data():
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """SELECT subject_id, eye, meridian, eccentricity_deg,
+                      cone_spectral_type, cone_x_microns, cone_y_microns,
+                      lm_ratio, scones
+               FROM cone_data
+               ORDER BY subject_id, meridian, eccentricity_deg
+               LIMIT 500000"""
+        )
+    return JSONResponse(content=[dict(r) for r in rows])
+
+
+# 7) Upload log
+@app.get("/upload-log")
+async def get_upload_log():
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT id, uploaded_at, subject_id, eye, event_type, "
+            "commit_message, rows_ingested, uploaded_by "
+            "FROM upload_log ORDER BY uploaded_at DESC LIMIT 100"
+        )
+    result = []
+    for r in rows:
+        row_dict = dict(r)
+        for k, v in row_dict.items():
+            if isinstance(v, datetime):
+                row_dict[k] = v.isoformat()
+        result.append(row_dict)
+    return JSONResponse(content=result)
+
+
+# 8) CSV export (streaming)
 @app.get("/cones/export")
 async def export_cones(
     subject_id: str = Query(...),
@@ -360,7 +396,6 @@ async def export_cones(
     """
 
     async def stream_generator():
-        from datetime import datetime
         pool = get_pool()
         async with pool.acquire() as conn:
             rows = await conn.fetch(sql, *params)
