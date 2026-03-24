@@ -511,20 +511,22 @@ async def admin_validate(
     }
 
 
-# 9) Admin CSV upload (atomic transaction — rolls back on any error)
-@app.post("/admin/upload")
-async def admin_upload(
-    file: UploadFile = File(...),
-    authorization: Optional[str] = Header(None),
+# 9) Admin CSV upload — background ingestion with upload detection and logging
+async def _ingest_and_log(
+    rows: list[tuple],
+    subject_ids: list[str],
+    eye_vals: list[str],
+    commit_message: Optional[str],
 ):
-    _require_admin(authorization)
-    content = await file.read()
-    df = _parse_upload(content, file.filename or "")
-
-    rows = [to_row(r) for _, r in df.iterrows()]
-
     pool = get_pool()
     async with pool.acquire() as conn:
+        # Detection: check if any (subject_id, eye) pair already exists
+        existing = await conn.fetch(
+            "SELECT 1 FROM cone_data WHERE subject_id = ANY($1::text[]) AND eye = ANY($2::text[]) LIMIT 1",
+            subject_ids, eye_vals,
+        )
+        event_type = "update" if existing else "new_patient"
+
         async with conn.transaction():
             await conn.executemany(
                 """INSERT INTO cone_data (
@@ -536,8 +538,40 @@ async def admin_upload(
                 ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22)""",
                 rows,
             )
+            # Log in same transaction — no ghost entries if cone_data INSERT fails
+            await conn.execute(
+                """INSERT INTO upload_log
+                   (subject_id, eye, event_type, commit_message, rows_ingested, uploaded_by)
+                   VALUES ($1, $2, $3, $4, $5, $6)""",
+                subject_ids[0] if subject_ids else None,
+                eye_vals[0] if eye_vals else None,
+                event_type,
+                commit_message[:500] if commit_message else None,
+                len(rows),
+                "admin",
+            )
 
-    return {"rows_inserted": len(rows), "filename": file.filename}
+
+@app.post("/admin/upload")
+async def admin_upload(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    commit_message: Optional[str] = Form(None),
+    authorization: Optional[str] = Header(None),
+):
+    _require_admin(authorization)
+    content = await file.read()  # bytes read BEFORE task queued
+    filename = file.filename or ""
+    df = _parse_upload(content, filename)  # validate synchronously
+    rows = [to_row(r) for _, r in df.iterrows()]
+
+    subjects = sorted(df["subject_id"].dropna().unique().tolist()) if "subject_id" in df.columns else []
+    eyes = sorted(df["eye"].dropna().unique().tolist()) if "eye" in df.columns else []
+
+    background_tasks.add_task(
+        _ingest_and_log, rows, subjects, eyes, commit_message
+    )
+    return {"queued": True, "row_count": len(rows), "subjects": subjects}
 
 
 if __name__ == "__main__":
