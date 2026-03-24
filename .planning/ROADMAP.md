@@ -41,12 +41,12 @@ Plans:
   3. All 13 subjects from `Cone_classification_data/` are in the database with real meridian values and NC cone classifications visible via `SELECT DISTINCT cone_spectral_type FROM cone_data`
   4. `POST /admin/upload` accepts a CSV, runs filecleaner.py via BackgroundTask (bytes read before task is queued), and returns per-subject row counts
   5. `distribute_meridians.py` and `update_meridians.py` are deleted from the repository
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 Plans:
 - [x] 02-01-PLAN.md — Create upload_log table, delete fake meridian scripts, verify BACK-02 + INFRA-03
 - [ ] 02-02-PLAN.md — Ingest all 13 subjects from Cone_classification_data/ into Supabase
 - [x] 02-03-PLAN.md — Add GET /subjects/data, refactor POST /admin/upload with BackgroundTask + upload detection, add GET /upload-log
-- [ ] 02-04-PLAN.md — Build Navbar, Updates timeline page, admin commit message field
+- [x] 02-04-PLAN.md — Build Navbar, Updates timeline page, admin commit message field
 
 ### Phase 3: Frontend and Admin
 **Goal**: Researchers see a fully functional viewer with cone type coloring, meridian filtering, and stats — and the admin operator can upload new CSVs through a password-protected UI
@@ -78,6 +78,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Security and Foundation | 1/2 | In Progress|  |
-| 2. Backend and Data | 2/4 | In Progress|  |
+| 2. Backend and Data | 3/4 | In Progress|  |
 | 3. Frontend and Admin | 0/TBD | Not started | - |
 | 4. Deployment | 0/TBD | Not started | - |
