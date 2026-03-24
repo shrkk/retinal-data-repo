@@ -6,7 +6,7 @@ import "./styles/globals.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <ThemeProvider defaultTheme="system" storageKey="retinal-ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="retinal-ui-theme">
       <App />
     </ThemeProvider>
   </React.StrictMode>

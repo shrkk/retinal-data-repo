@@ -1,5 +1,4 @@
 import React from "react";
-import { ModeToggle } from "./mode-toggle";
 
 type View = "main" | "admin" | "updates";
 
@@ -58,51 +57,66 @@ export const Navbar: React.FC<NavbarProps> = ({ view, onNavigate }) => {
           width: "100%",
           margin: "0 auto",
           padding: "0 1rem",
-          display: "flex",
+          display: "grid",
+          gridTemplateColumns: "1fr auto 1fr",
           alignItems: "center",
-          gap: "0.25rem",
         }}
       >
-        {navItems.map((item) => {
-          const isActive = view === item.value;
-          return (
-            <button
-              key={item.value}
-              onClick={() => onNavigate(item.value)}
-              aria-current={isActive ? "page" : undefined}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                minHeight: "44px",
-                padding: "8px 16px",
-                border: "none",
-                borderRadius: "var(--radius)",
-                cursor: "pointer",
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                backgroundColor: isActive ? "var(--primary)" : "transparent",
-                color: isActive ? "var(--primary-foreground)" : "var(--foreground)",
-                transition: "background-color 0.15s, color 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
-                }
-              }}
-            >
-              {item.icon}
-              {item.label}
-            </button>
-          );
-        })}
-        <div style={{ marginLeft: "auto" }}>
-          <ModeToggle />
+        {/* Left: brand */}
+        <span
+          style={{
+            fontSize: "0.9rem",
+            fontWeight: 600,
+            color: "var(--foreground)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          SabLab: Retinal Cone Viewer
+        </span>
+
+        {/* Center: nav links */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+          {navItems.map((item) => {
+            const isActive = view === item.value;
+            return (
+              <button
+                key={item.value}
+                onClick={() => onNavigate(item.value)}
+                aria-current={isActive ? "page" : undefined}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  minHeight: "44px",
+                  padding: "8px 16px",
+                  border: "none",
+                  borderRadius: "var(--radius)",
+                  cursor: "pointer",
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  backgroundColor: isActive ? "var(--primary)" : "transparent",
+                  color: isActive ? "var(--primary-foreground)" : "var(--foreground)",
+                  transition: "background-color 0.15s, color 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = "var(--accent)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+                  }
+                }}
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            );
+          })}
         </div>
+
+        {/* Right: empty spacer to keep center balanced */}
+        <div />
       </div>
     </nav>
   );
