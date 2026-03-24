@@ -48,6 +48,23 @@ CREATE INDEX IF NOT EXISTS idx_cone_data_plot_query
 """
 
 
+UPLOAD_LOG_SQL = """
+CREATE TABLE IF NOT EXISTS upload_log (
+    id             BIGSERIAL PRIMARY KEY,
+    uploaded_at    TIMESTAMPTZ DEFAULT now(),
+    subject_id     TEXT,
+    eye            TEXT,
+    event_type     TEXT NOT NULL,
+    commit_message TEXT,
+    rows_ingested  INTEGER,
+    uploaded_by    TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_upload_log_uploaded_at
+    ON upload_log (uploaded_at DESC);
+"""
+
+
 async def main():
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
@@ -57,6 +74,9 @@ async def main():
     try:
         await conn.execute(SCHEMA_SQL)
         print("Schema created successfully")
+
+        await conn.execute(UPLOAD_LOG_SQL)
+        print("upload_log table created successfully")
 
         # Verify table exists and column types
         rows = await conn.fetch(
@@ -74,6 +94,15 @@ async def main():
         print(f"\nIndexes ({len(idx_rows)}):")
         for row in idx_rows:
             print(f"  {row['indexname']}")
+
+        # Verify upload_log table
+        ul_rows = await conn.fetch(
+            "SELECT column_name FROM information_schema.columns "
+            "WHERE table_name = 'upload_log' ORDER BY ordinal_position"
+        )
+        print(f"\nTable upload_log has {len(ul_rows)} columns:")
+        for row in ul_rows:
+            print(f"  {row['column_name']}")
     finally:
         await conn.close()
 
