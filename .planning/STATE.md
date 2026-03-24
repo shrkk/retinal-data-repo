@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-02-PLAN.md — asyncpg migration and PostgreSQL schema creation complete
-last_updated: "2026-03-23T02:59:23.080Z"
-last_activity: 2026-03-23
+status: Ready to execute
+stopped_at: Completed 02-01-PLAN.md — upload_log table created, fake meridian scripts deleted, BACK-02 and INFRA-03 verified
+last_updated: "2026-03-24T03:11:24.996Z"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
-  percent: 50
+  total_plans: 6
+  completed_plans: 3
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-22)
 
 **Core value:** Researchers can instantly see how cone density and spectral composition vary with retinal eccentricity for any subject — without running scripts or managing files.
-**Current focus:** Phase 1 — Security and Foundation
+**Current focus:** Phase 02 — backend-and-data
 
 ## Current Position
 
-Phase: 2 of 4 (backend and data)
-Plan: Not started
-Status: In Progress
-Last activity: 2026-03-23
-
-Progress: [█████░░░░░] 50%
+Phase: 02 (backend-and-data) — EXECUTING
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -54,6 +48,7 @@ Progress: [█████░░░░░] 50%
 *Updated after each plan completion*
 | Phase 01-security-and-foundation P01 | 40min | 2 tasks | 2 files |
 | Phase 01-security-and-foundation P02 | 3min | 3 tasks | 5 files |
+| Phase 02-backend-and-data P01 | 10min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -70,6 +65,7 @@ Recent decisions affecting current work:
 - [Phase 01-security-and-foundation]: asyncpg pool max_size=5 to stay within Supabase free tier connection limits
 - [Phase 01-security-and-foundation]: statement_cache_size=0 applied to all asyncpg connections (pool and direct) for Supabase pgbouncer compatibility
 - [Phase 01-security-and-foundation]: settings = Settings() at module level for fail-fast startup when DATABASE_URL or ADMIN_PASSWORD missing
+- [Phase 02-backend-and-data]: upload_log uses single subject_id TEXT per upload row (v1 acceptable)
 
 ### Pending Todos
 
@@ -84,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T02:54:58.711Z
-Stopped at: Completed 01-02-PLAN.md — asyncpg migration and PostgreSQL schema creation complete
+Last session: 2026-03-24T03:11:24.994Z
+Stopped at: Completed 02-01-PLAN.md — upload_log table created, fake meridian scripts deleted, BACK-02 and INFRA-03 verified
 Resume file: None
