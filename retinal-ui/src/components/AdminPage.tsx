@@ -12,8 +12,9 @@ interface ValidationResult {
 }
 
 interface UploadResult {
-  filename: string;
-  rows_inserted: number;
+  queued: boolean;
+  row_count: number;
+  subjects: string[];
 }
 
 interface Props {
@@ -35,6 +36,9 @@ export const AdminPage: React.FC<Props> = ({ onBack }) => {
   const [validating, setValidating] = useState(false);
   const [validateError, setValidateError] = useState("");
   const [validation, setValidation] = useState<ValidationResult | null>(null);
+
+  // Commit message state
+  const [commitMessage, setCommitMessage] = useState("");
 
   // Confirm/upload state
   const [uploading, setUploading] = useState(false);
@@ -100,7 +104,7 @@ export const AdminPage: React.FC<Props> = ({ onBack }) => {
     setUploading(true);
     setUploadError("");
     try {
-      const result = await adminUploadCSV(token, file);
+      const result = await adminUploadCSV(token, file, commitMessage || undefined);
       setUploadResult(result);
       setStage("done");
     } catch (err) {
@@ -117,6 +121,7 @@ export const AdminPage: React.FC<Props> = ({ onBack }) => {
     setUploadResult(null);
     setValidateError("");
     setUploadError("");
+    setCommitMessage("");
     setStage("upload");
   };
 
@@ -139,23 +144,6 @@ export const AdminPage: React.FC<Props> = ({ onBack }) => {
         gap: "1rem",
         marginBottom: "2.5rem",
       }}>
-        <button
-          onClick={onBack}
-          style={{
-            background: "none",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius)",
-            padding: "0.4rem 0.75rem",
-            cursor: "pointer",
-            color: "var(--foreground)",
-            fontSize: "0.875rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "0.35rem",
-          }}
-        >
-          ← Back
-        </button>
         <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 600 }}>Admin Upload</h1>
       </div>
 
@@ -284,6 +272,35 @@ export const AdminPage: React.FC<Props> = ({ onBack }) => {
                 accept=".csv"
                 style={{ display: "none" }}
                 onChange={(e) => pickFile(e.target.files)}
+              />
+            </div>
+
+            {/* Commit message input */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label
+                htmlFor="commit-message"
+                style={{ fontSize: "14px", fontWeight: 400, color: "var(--foreground)" }}
+              >
+                Commit message
+              </label>
+              <input
+                id="commit-message"
+                type="text"
+                value={commitMessage}
+                onChange={(e) => setCommitMessage(e.target.value)}
+                placeholder="Describe this upload&#x2026;"
+                maxLength={500}
+                style={{
+                  padding: "0.6rem 0.75rem",
+                  borderRadius: "var(--radius)",
+                  border: "1px solid var(--border)",
+                  backgroundColor: "var(--background)",
+                  color: "var(--foreground)",
+                  fontSize: "0.875rem",
+                  outline: "none",
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
               />
             </div>
 
@@ -432,7 +449,7 @@ export const AdminPage: React.FC<Props> = ({ onBack }) => {
               fontSize: "0.875rem",
               color: "#166534",
             }}>
-              <strong>{uploadResult.filename}</strong>: {uploadResult.rows_inserted.toLocaleString()} rows inserted
+              <strong>Subjects: {uploadResult.subjects.join(", ")}</strong>: {uploadResult.row_count.toLocaleString()} rows queued for ingestion
             </div>
 
             <div style={{ display: "flex", gap: "0.75rem" }}>
