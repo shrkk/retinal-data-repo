@@ -82,7 +82,7 @@ None yet.
 ### Blockers/Concerns
 
 - [Phase 1]: `lib/supabase.ts` is missing — CSV download silently broken in current app (to be addressed in 01-02)
-- [Phase 2]: NC cone presence in real data is unconfirmed — validate with `SELECT DISTINCT cone_spectral_type` after ingestion before building UI
+- [Phase 2 RESOLVED]: NC cones ARE present in real data — cone_spectral_type = 'NC' confirmed via SELECT DISTINCT after 02-02 ingestion
 - [Phase 2]: Supabase free tier limits connections to ~15 — may need Pro tier or reduce asyncpg `max_size` to 2-3 per worker
 - [Phase 4]: CORS `ALLOWED_ORIGINS` on Render can only be set after Vercel URL is known — sequence matters
 
