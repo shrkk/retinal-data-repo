@@ -65,6 +65,33 @@ export async function getPlotData(filters: {
   return res.json();
 }
 
+export async function getSubjectsData(): Promise<Array<Record<string, any>>> {
+  const res = await fetch(`${API_BASE}/subjects/data`);
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  return res.json();
+}
+
+export interface UploadLogEntry {
+  id: number;
+  uploaded_at: string;
+  subject_id: string | null;
+  eye: string | null;
+  event_type: string;
+  commit_message: string | null;
+  rows_ingested: number;
+  uploaded_by: string | null;
+}
+
+export async function getUploadLog(): Promise<UploadLogEntry[]> {
+  const res = await fetch(`${API_BASE}/upload-log`);
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function getEccentricityRanges(subjectId: string, meridian: string): Promise<{ ranges: Array<{ min: number; max: number; label: string }> }> {
   const params = new URLSearchParams();
   params.append("subject_id", subjectId);
@@ -113,11 +140,13 @@ export async function adminValidateCSV(
 export async function adminUploadCSV(
   token: string,
   file: File,
-  onProgress?: (msg: string) => void
-): Promise<{ rows_inserted: number; filename: string }> {
+  commitMessage?: string,
+  onProgress?: (msg: string) => void,
+): Promise<{ queued: boolean; row_count: number; subjects: string[] }> {
   onProgress?.(`Uploading ${file.name}...`);
   const formData = new FormData();
   formData.append("file", file);
+  if (commitMessage) formData.append("commit_message", commitMessage);
 
   const res = await fetch(`${API_BASE}/admin/upload`, {
     method: "POST",
