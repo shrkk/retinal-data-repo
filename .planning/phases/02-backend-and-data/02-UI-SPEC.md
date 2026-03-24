@@ -189,13 +189,13 @@ These two semantic colors are ONLY used for event type badges. They must not app
 #### Time Pill
 
 - Container: `background: var(--secondary)`, `border: 1px solid var(--border)`, `border-radius: 999px`
-- Padding: 4px 10px
+- Padding: 4px 8px
 - Font: 12px / weight 500 / `--foreground`
 - Content: time only, e.g. `"2:30 PM"` (not date — date is inside the card)
 
 #### Timeline Card
 
-**Dimensions:** Full width of right column. Padding: 16px 20px. Border-radius: `var(--radius)`. Background: `var(--card)`. Box-shadow: `0 1px 3px oklch(0 0 0 / 0.08)` (subtle, matches CONTEXT.md "white cards with subtle shadow").
+**Dimensions:** Full width of right column. Padding: 16px 24px. Border-radius: `var(--radius)`. Background: `var(--card)`. Box-shadow: `0 1px 3px oklch(0 0 0 / 0.08)` (subtle, matches CONTEXT.md "white cards with subtle shadow").
 
 **Card anatomy (top to bottom):**
 
@@ -216,7 +216,7 @@ These two semantic colors are ONLY used for event type badges. They must not app
    - If null: element is not rendered (no placeholder text, no empty line)
 
 **Event type badge:**
-- Pill shape: `border-radius: 999px`, padding `2px 10px`, height 20px
+- Pill shape: `border-radius: 999px`, padding `4px 8px`, height 20px
 - `new_patient`: `background: #16a34a`, `color: #ffffff`, label: `"New Patient"`
 - `update`: `background: #d97706`, `color: #ffffff`, label: `"Update"`
 - Font: 12px/500
