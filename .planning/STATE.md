@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-02-PLAN.md — asyncpg migration and PostgreSQL schema creation complete
-last_updated: "2026-03-23T02:59:23.080Z"
-last_activity: 2026-03-23
+stopped_at: Completed 02-02-PLAN.md — all 13 AO subject CSVs ingested into Supabase (165,928 rows), NC cones confirmed present
+last_updated: "2026-03-24T03:15:00.000Z"
+last_activity: 2026-03-24
 progress:
   total_phases: 4
   completed_phases: 1
@@ -70,6 +70,8 @@ Recent decisions affecting current work:
 - [Phase 01-security-and-foundation]: asyncpg pool max_size=5 to stay within Supabase free tier connection limits
 - [Phase 01-security-and-foundation]: statement_cache_size=0 applied to all asyncpg connections (pool and direct) for Supabase pgbouncer compatibility
 - [Phase 01-security-and-foundation]: settings = Settings() at module level for fail-fast startup when DATABASE_URL or ADMIN_PASSWORD missing
+- [Phase 02-backend-and-data]: NC cones ARE present in real data (L, M, S, NC all confirmed) — frontend Phase 3 should render NC in grey
+- [Phase 02-backend-and-data]: Meridian casing inconsistency in source data ('inferior' lowercase, others title-case) — case-insensitive matching in backend already handles this
 
 ### Pending Todos
 
@@ -78,12 +80,12 @@ None yet.
 ### Blockers/Concerns
 
 - [Phase 1]: `lib/supabase.ts` is missing — CSV download silently broken in current app (to be addressed in 01-02)
-- [Phase 2]: NC cone presence in real data is unconfirmed — validate with `SELECT DISTINCT cone_spectral_type` after ingestion before building UI
+- [Phase 2 RESOLVED]: NC cones ARE present in real data — cone_spectral_type = 'NC' confirmed via SELECT DISTINCT after 02-02 ingestion
 - [Phase 2]: Supabase free tier limits connections to ~15 — may need Pro tier or reduce asyncpg `max_size` to 2-3 per worker
 - [Phase 4]: CORS `ALLOWED_ORIGINS` on Render can only be set after Vercel URL is known — sequence matters
 
 ## Session Continuity
 
-Last session: 2026-03-23T02:54:58.711Z
-Stopped at: Completed 01-02-PLAN.md — asyncpg migration and PostgreSQL schema creation complete
+Last session: 2026-03-24T03:15:00Z
+Stopped at: Completed 02-02-PLAN.md — all 13 AO subject CSVs ingested into Supabase (165,928 rows), NC cones confirmed present
 Resume file: None
