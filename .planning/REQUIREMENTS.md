@@ -17,16 +17,16 @@ Requirements for production-ready deployment. Each maps to roadmap phases.
 ### Data Integrity
 
 - [x] **DATA-01**: Live Supabase password is removed from `test_db.py`, rotated in Supabase, and purged from git history
-- [ ] **DATA-02**: All 13 subjects from `Cone_classification_data/` are ingested into Supabase via filecleaner.py with real meridian and NC cone data
+- [x] **DATA-02**: All 13 subjects from `Cone_classification_data/` are ingested into Supabase via filecleaner.py with real meridian and NC cone data
 - [x] **DATA-03**: Fake meridian generator scripts (`distribute_meridians.py`, `update_meridians.py`) are deleted — meridian data comes exclusively from CSV ingestion
-- [ ] **DATA-04**: Every admin CSV upload is automatically processed through filecleaner.py before any data touches the database — no raw or unclean data can be inserted
+- [x] **DATA-04**: Every admin CSV upload is automatically processed through filecleaner.py before any data touches the database — no raw or unclean data can be inserted
 
 ### Backend
 
 - [x] **BACK-01**: FastAPI routes use asyncpg pool for all database queries, replacing aiosqlite
 - [x] **BACK-02**: Hardcoded `localhost:8000` URL is removed from the frontend; API base URL is read from `VITE_API_URL` environment variable
-- [ ] **BACK-03**: A bulk endpoint `GET /subjects/data` returns all subjects' cone data in a single query, replacing the N+1 per-subject call pattern
-- [ ] **BACK-04**: `POST /admin/upload` endpoint accepts a CSV file, runs filecleaner.py via BackgroundTask (using the UploadFile bytes-first pattern), and returns an ingestion summary (rows per subject, errors)
+- [x] **BACK-03**: A bulk endpoint `GET /subjects/data` returns all subjects' cone data in a single query, replacing the N+1 per-subject call pattern
+- [x] **BACK-04**: `POST /admin/upload` endpoint accepts a CSV file, runs filecleaner.py via BackgroundTask (using the UploadFile bytes-first pattern), and returns an ingestion summary (rows per subject, errors)
 
 ### Frontend — Bug Fixes
 
@@ -90,12 +90,12 @@ Deferred to future release.
 | INFRA-04 | Phase 1 | Complete |
 | BACK-01 | Phase 1 | Complete |
 | BACK-02 | Phase 2 | Complete |
-| BACK-03 | Phase 2 | Pending |
+| BACK-03 | Phase 2 | Complete |
 | INFRA-03 | Phase 2 | Complete |
-| DATA-02 | Phase 2 | Pending |
+| DATA-02 | Phase 2 | Complete |
 | DATA-03 | Phase 2 | Complete |
-| DATA-04 | Phase 2 | Pending |
-| BACK-04 | Phase 2 | Pending |
+| DATA-04 | Phase 2 | Complete |
+| BACK-04 | Phase 2 | Complete |
 | ADMIN-01 | Phase 3 | Pending |
 | ADMIN-02 | Phase 3 | Pending |
 | FE-01 | Phase 3 | Pending |

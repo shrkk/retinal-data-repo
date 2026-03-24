@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 02-01-PLAN.md — upload_log table created, fake meridian scripts deleted, BACK-02 and INFRA-03 verified
-last_updated: "2026-03-24T03:11:24.996Z"
+stopped_at: Completed 02-03-PLAN.md — bulk endpoint, BackgroundTask upload, upload-log
+last_updated: "2026-03-24T03:16:50.527Z"
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 6
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 ## Current Position
 
 Phase: 02 (backend-and-data) — EXECUTING
-Plan: 2 of 4
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -49,6 +49,8 @@ Plan: 2 of 4
 | Phase 01-security-and-foundation P01 | 40min | 2 tasks | 2 files |
 | Phase 01-security-and-foundation P02 | 3min | 3 tasks | 5 files |
 | Phase 02-backend-and-data P01 | 10min | 2 tasks | 3 files |
+| Phase 02-backend-and-data P02 | 3min | 1 tasks | 0 files |
+| Phase 02-backend-and-data P03 | 8min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -66,6 +68,10 @@ Recent decisions affecting current work:
 - [Phase 01-security-and-foundation]: statement_cache_size=0 applied to all asyncpg connections (pool and direct) for Supabase pgbouncer compatibility
 - [Phase 01-security-and-foundation]: settings = Settings() at module level for fail-fast startup when DATABASE_URL or ADMIN_PASSWORD missing
 - [Phase 02-backend-and-data]: upload_log uses single subject_id TEXT per upload row (v1 acceptable)
+- [Phase 02-backend-and-data]: NC cones ARE present in real data (L, M, S, NC confirmed) — frontend Phase 3 should render NC in grey
+- [Phase 02-backend-and-data]: Meridian casing inconsistency in source CSVs ('inferior' lowercase, others title-case) — case-insensitive matching already in backend handles this
+- [Phase 02-backend-and-data]: Bytes-first BackgroundTask: bytes read in handler before queuing to avoid UploadFile use-after-close
+- [Phase 02-backend-and-data]: upload_log INSERT in same transaction as cone_data INSERT — no ghost log entries on failure
 
 ### Pending Todos
 
@@ -80,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T03:11:24.994Z
-Stopped at: Completed 02-01-PLAN.md — upload_log table created, fake meridian scripts deleted, BACK-02 and INFRA-03 verified
+Last session: 2026-03-24T03:16:50.525Z
+Stopped at: Completed 02-03-PLAN.md — bulk endpoint, BackgroundTask upload, upload-log
 Resume file: None
