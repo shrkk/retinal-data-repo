@@ -3,7 +3,7 @@ import type { Patient } from "../types/index";
 import { getPatients } from "../api";
 
 interface FilterBarProps {
-  onChange: (filters: { subjectId: string; meridian: string; coneTypes: string[]; eccentricityMin?: number; eccentricityMax?: number }) => void;
+  onChange: (filters: { subjectId: string; meridian: string; coneTypes: string[]; eccentricityMin?: number; eccentricityMax?: number; eye?: string }) => void;
   onDownload: (displayId: string) => void;
   onAdminClick?: () => void;
   useSubPlots?: boolean;
@@ -32,10 +32,18 @@ export const FilterBar: React.FC<FilterBarProps> = ({ onChange, onDownload, onAd
     return displayId.replace(/[RL]$/, '');
   };
 
-  // Get the selected patient's eye information
+  // Derive eye code ('OD'/'OS') from a display ID suffix
+  const parseEye = (displayId: string): string | undefined => {
+    if (displayId.endsWith('R')) return 'OD';
+    if (displayId.endsWith('L')) return 'OS';
+    return undefined;
+  };
+
+  // Get the selected patient's eye information (match by subject_id + derived eye)
   const selectedPatient = patients.find(p => {
     const baseId = parseSubjectId(subjectId);
-    return p.subject_id === baseId;
+    const eye = parseEye(subjectId);
+    return p.subject_id === baseId && (eye ? p.eye === eye : true);
   });
 
   useEffect(() => {
@@ -60,7 +68,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({ onChange, onDownload, onAd
     if (subjectId && meridian && coneTypes.length > 0) {
       // Convert display ID (with R/L suffix) back to base subject_id for API calls
       const baseSubjectId = parseSubjectId(subjectId);
-      onChange({ subjectId: baseSubjectId, meridian, coneTypes, eccentricityMin: eccMin, eccentricityMax: eccMax });
+      const eye = parseEye(subjectId);
+      onChange({ subjectId: baseSubjectId, meridian, coneTypes, eccentricityMin: eccMin, eccentricityMax: eccMax, eye });
     }
   }, [subjectId, meridian, coneTypes, eccMin, eccMax]);
 

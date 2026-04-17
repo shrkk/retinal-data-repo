@@ -21,22 +21,24 @@ export async function getPatients(): Promise<Patient[]> {
 }
 
 export async function getMetadata(
-  subjectId: string, 
+  subjectId: string,
   meridian: string,
   coneTypes?: string[],
   eccentricityMin?: number,
-  eccentricityMax?: number
+  eccentricityMax?: number,
+  eye?: string
 ): Promise<Record<string, any>> {
   const params = new URLSearchParams();
   params.append("subject_id", subjectId);
   params.append("meridian", meridian);
-  
+  if (eye) params.append("eye", eye);
+
   if (coneTypes && coneTypes.length > 0) {
     coneTypes.forEach(type => params.append("cone_spectral_type", type));
   }
   if (eccentricityMin !== undefined) params.append("eccentricity_min", eccentricityMin.toString());
   if (eccentricityMax !== undefined) params.append("eccentricity_max", eccentricityMax.toString());
-  
+
   const res = await fetch(`${API_BASE}/metadata?${params.toString()}`);
   if (!res.ok) {
     throw new Error(`HTTP error! status: ${res.status}`);
@@ -50,10 +52,12 @@ export async function getPlotData(filters: {
   coneTypes: string[];
   eccentricityMin?: number;
   eccentricityMax?: number;
+  eye?: string;
 }): Promise<PlotData> {
   const params = new URLSearchParams();
   params.append("subject_id", filters.subjectId);
   params.append("meridian", filters.meridian);
+  if (filters.eye) params.append("eye", filters.eye);
   filters.coneTypes.forEach((type) => params.append("cone_spectral_type", type));
   if (filters.eccentricityMin !== undefined) params.append("eccentricity_min", filters.eccentricityMin.toString());
   if (filters.eccentricityMax !== undefined) params.append("eccentricity_max", filters.eccentricityMax.toString());
@@ -92,11 +96,12 @@ export async function getUploadLog(): Promise<UploadLogEntry[]> {
   return res.json();
 }
 
-export async function getEccentricityRanges(subjectId: string, meridian: string): Promise<{ ranges: Array<{ min: number; max: number; label: string }> }> {
+export async function getEccentricityRanges(subjectId: string, meridian: string, eye?: string): Promise<{ ranges: Array<{ min: number; max: number; label: string }> }> {
   const params = new URLSearchParams();
   params.append("subject_id", subjectId);
   params.append("meridian", meridian);
-  
+  if (eye) params.append("eye", eye);
+
   const res = await fetch(`${API_BASE}/eccentricity-ranges?${params.toString()}`);
   if (!res.ok) {
     throw new Error(`HTTP error! status: ${res.status}`);

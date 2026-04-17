@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "Cone_classification_data",
+			"path": "../../../../../Downloads/Cone_classification_data"
+		},
+		{
+			"name": "retinal-data-repo",
+			"path": "../../.."
+		}
+	],
+	"settings": {}
+}

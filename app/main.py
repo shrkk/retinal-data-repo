@@ -130,6 +130,7 @@ async def get_cones(
 @app.get("/plot-data", response_model=PlotData)
 async def plot_data(
     subject_id: Optional[str] = Query(None),
+    eye: Optional[str] = Query(None),
     meridian: Optional[str] = Query(None),
     cone_type: Optional[List[str]] = Query(None, alias="cone_spectral_type"),
     eccentricity_min: Optional[float] = Query(None),
@@ -143,6 +144,10 @@ async def plot_data(
     if subject_id:
         where_clauses.append(f"subject_id = ${param_idx}")
         params.append(subject_id)
+        param_idx += 1
+    if eye:
+        where_clauses.append(f"UPPER(eye) = UPPER(${param_idx})")
+        params.append(eye)
         param_idx += 1
     if meridian:
         where_clauses.append(f"LOWER(meridian) = LOWER(${param_idx})")
@@ -190,6 +195,7 @@ async def plot_data(
 @app.get("/metadata")
 async def get_metadata(
     subject_id: Optional[str] = Query(None),
+    eye: Optional[str] = Query(None),
     meridian: Optional[str] = Query(None),
     cone_type: Optional[List[str]] = Query(None, alias="cone_spectral_type"),
     eccentricity_min: Optional[float] = Query(None),
@@ -202,6 +208,10 @@ async def get_metadata(
     if subject_id:
         where_clauses.append(f"subject_id = ${param_idx}")
         params.append(subject_id)
+        param_idx += 1
+    if eye:
+        where_clauses.append(f"UPPER(eye) = UPPER(${param_idx})")
+        params.append(eye)
         param_idx += 1
     if meridian:
         where_clauses.append(f"LOWER(meridian) = LOWER(${param_idx})")
@@ -274,16 +284,27 @@ async def get_metadata(
 async def get_eccentricity_ranges(
     subject_id: str = Query(...),
     meridian: str = Query(...),
+    eye: Optional[str] = Query(None),
 ):
     pool = get_pool()
     async with pool.acquire() as conn:
-        rows = await conn.fetch(
-            "SELECT DISTINCT eccentricity_deg, COUNT(*) as count "
-            "FROM cone_data "
-            "WHERE subject_id = $1 AND LOWER(meridian) = LOWER($2) "
-            "GROUP BY eccentricity_deg ORDER BY eccentricity_deg",
-            subject_id, meridian
-        )
+        if eye:
+            rows = await conn.fetch(
+                "SELECT DISTINCT eccentricity_deg, COUNT(*) as count "
+                "FROM cone_data "
+                "WHERE subject_id = $1 AND LOWER(meridian) = LOWER($2) "
+                "AND UPPER(eye) = UPPER($3) "
+                "GROUP BY eccentricity_deg ORDER BY eccentricity_deg",
+                subject_id, meridian, eye
+            )
+        else:
+            rows = await conn.fetch(
+                "SELECT DISTINCT eccentricity_deg, COUNT(*) as count "
+                "FROM cone_data "
+                "WHERE subject_id = $1 AND LOWER(meridian) = LOWER($2) "
+                "GROUP BY eccentricity_deg ORDER BY eccentricity_deg",
+                subject_id, meridian
+            )
 
     if not rows:
         return JSONResponse(content={"ranges": []})

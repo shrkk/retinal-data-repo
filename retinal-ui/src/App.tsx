@@ -55,6 +55,7 @@ const App: React.FC = () => {
                   subjectId={filters.subjectId}
                   meridian={filters.meridian}
                   coneTypes={filters.coneTypes}
+                  eye={filters.eye}
                 />
               ) : (
                 <div style={{
