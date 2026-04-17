@@ -170,8 +170,10 @@ async def plot_data(
     params.append(limit)
 
     where_sql = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+    # DISTINCT on (x, y, cone_type) defends against accidental duplicate rows
+    # from re-uploaded CSVs — physical cones can't share all three values.
     sql = f"""
-        SELECT cone_x_microns AS x, cone_y_microns AS y, cone_spectral_type AS cone_type
+        SELECT DISTINCT cone_x_microns AS x, cone_y_microns AS y, cone_spectral_type AS cone_type
         FROM cone_data
         {where_sql}
         ORDER BY cone_x_microns NULLS LAST
@@ -246,15 +248,19 @@ async def get_metadata(
         LIMIT 1;
     """
 
-    # Get actual counts for filtered data
+    # Counts are computed over deduped (x, y, cone_type) triples so
+    # re-uploaded duplicates don't inflate totals.
     counts_sql = f"""
         SELECT
             COUNT(*) as total_filtered_cones,
             COUNT(CASE WHEN cone_spectral_type = 'L' THEN 1 END) as l_cones_count,
             COUNT(CASE WHEN cone_spectral_type = 'M' THEN 1 END) as m_cones_count,
             COUNT(CASE WHEN cone_spectral_type = 'S' THEN 1 END) as s_cones_count
-        FROM cone_data
-        {where_sql};
+        FROM (
+            SELECT DISTINCT cone_x_microns, cone_y_microns, cone_spectral_type
+            FROM cone_data
+            {where_sql}
+        ) sub;
     """
 
     pool = get_pool()
@@ -548,7 +554,24 @@ async def _ingest_and_log(
         )
         event_type = "update" if existing else "new_patient"
 
+        # Build the exact (subject_id, eye) pairs present in this upload so a
+        # delete-before-insert can't over-reach into unrelated (subject, eye) combos.
+        # Positions 3 and 4 in the row tuple are subject_id and eye (see csv_parser.to_row).
+        upload_pairs = sorted({(r[3], r[4]) for r in rows if r[3] and r[4]})
+        pair_subjects = [p[0] for p in upload_pairs]
+        pair_eyes = [p[1] for p in upload_pairs]
+
         async with conn.transaction():
+            # Replace semantics: uploading AO001/OS again wipes the old AO001/OS rows
+            # before inserting the fresh set, so repeat uploads don't stack duplicates.
+            if upload_pairs:
+                await conn.execute(
+                    """DELETE FROM cone_data
+                       WHERE (subject_id, eye) IN (
+                           SELECT s, e FROM unnest($1::text[], $2::text[]) AS t(s, e)
+                       )""",
+                    pair_subjects, pair_eyes,
+                )
             await conn.executemany(
                 """INSERT INTO cone_data (
                     cone_x_microns, cone_y_microns, cone_spectral_type,
